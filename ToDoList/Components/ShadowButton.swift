@@ -47,6 +47,7 @@ class ShadowButton: UIButton {
         layer.masksToBounds = false
         layer.shadowOpacity = 1.0
         layer.shadowRadius = 0
+        print("Source control test")
     }
     
     override func didMoveToSuperview() {
