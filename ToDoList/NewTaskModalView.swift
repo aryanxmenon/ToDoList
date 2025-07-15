@@ -87,6 +87,7 @@ class NewTaskModalView: UIView {
     
     @IBAction func submitButtonTapped(_ sender: Any) {
         guard let caption = descriptionTextView.text,
+        descriptionTextView.textColor != UIColor.placeholderText,
         caption.count >= 4 else {
             return
         }
