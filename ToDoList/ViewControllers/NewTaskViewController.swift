@@ -7,11 +7,23 @@
 
 import UIKit
 
+//TODO: -Move to seperate protocol class
+/**
+NewTaskDelegate links NewTaskViewController and NewTaskModalView. This helps NewTaskViewController to know when to dismiss when the x button is tapped on the
+NewTaskModalView and to present an error alert when a user enters invalid input.
+ */
 protocol NewTaskDelegate : AnyObject {
+    ///Dismiss the NewTaskViewController. Called when the x button on the NewTaskModalView is tapped
     func closeView()
+    /**
+    This presents an error alert when the user enters an invalid input.
+     - Parameters:
+        -title: This is the title of the alert
+        -message:  A short description of what went wrong
+     */
     func presentErrorAlert(title: String, message: String)
 }
-
+///This class is responsible for creating a new task or editing an existing one
 class NewTaskViewController: UIViewController {
     
     lazy var modalView : NewTaskModalView = {
@@ -24,7 +36,12 @@ class NewTaskViewController: UIViewController {
     }()
     
     private var task: Task?
-    
+    /**
+        This creates NewTaskViewController
+        - Parameters:
+                -task: If a task is being edited, task should be passed, if a new task is being created, task should be nil
+        - Returns: NewTaskViewController with a NewTaskModalView for the user to edit or create a task
+     */
     
     init(task: Task? = nil) {
         super.init(nibName: nil, bundle: nil)
@@ -47,10 +64,8 @@ class NewTaskViewController: UIViewController {
     
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-        
-        UIView.animate(withDuration: 0.35, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 5, options: [.curveEaseOut]) {
-            self.modalView.transform = CGAffineTransform.identity
-        }
+        //We change the transform of the modal view to zero to perform a scale up animation when the view appears
+        modalView.scaleUpAnimation()
         
     }
     
