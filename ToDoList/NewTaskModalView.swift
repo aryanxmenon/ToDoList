@@ -87,8 +87,10 @@ class NewTaskModalView: UIView {
     
     @IBAction func submitButtonTapped(_ sender: Any) {
         guard let caption = descriptionTextView.text,
-        descriptionTextView.textColor != UIColor.placeholderText,
-        caption.count >= 4 else {
+              descriptionTextView.textColor != UIColor.placeholderText,
+              caption.count >= 4 else {
+            delegate?.presentErrorAlert(title: "Caption Error", message: "You need to provide a description with 4 or more characters")
+            shakeAnimation()
             return
         }
         let selectedRow = categoryPickerView.selectedRow(inComponent: 0)
