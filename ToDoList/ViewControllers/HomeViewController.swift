@@ -7,13 +7,14 @@
 
 import UIKit
 import os
+import RealmSwift
 ///The first screen you see when the app launches . This is where you see all tasks and this the starting point for adding or editing a task. Tasks can only be deleted from here.
 class HomeViewController: UIViewController {
 
     @IBOutlet weak var titleView: UIView!
     @IBOutlet weak var tableView: UITableView!
     var tasks : [Task] = []
-    
+    let realm = try! Realm()
     
     //We created the button programatically because we cannot add the button as a subview of a tableview in the interface builder.
     lazy var addButton : UIButton = {
@@ -31,6 +32,12 @@ class HomeViewController: UIViewController {
         super.viewDidLoad()
         setupView()
         setupNotifications()
+        let localTasks = realm.objects(LocalTask.self)
+        for localTask in localTasks {
+            let task = Task(id: localTask._id, category: localTask.category, caption: localTask.caption, createdDate: localTask.createdDate, isComplete: localTask.isComplete)
+            tasks.append(task)
+        }
+        tableView.reloadData()
     }
     
     private func setupView() {
@@ -68,6 +75,20 @@ class HomeViewController: UIViewController {
         }
         tasks[taskIndex] = taskToUpdate
         tableView.reloadData()
+        if let localTaskToEdit = realm.object(ofType: LocalTask.self, forPrimaryKey: taskToUpdate.id) {
+            do {
+                try realm.write {
+                    localTaskToEdit.caption = taskToUpdate.caption
+                    localTaskToEdit.isComplete = taskToUpdate.isComplete
+                    localTaskToEdit.category = taskToUpdate.category
+                }
+            }
+            
+            catch let error as NSError {
+                let errorText = error.localizedDescription
+                os_log("%@", type: .error, errorText)
+            }
+        }
     }
     
     /**
@@ -84,6 +105,21 @@ class HomeViewController: UIViewController {
         }
         tasks.append(task)
         tableView.reloadData()
+        let localTask = LocalTask()
+        localTask._id = task.id
+        localTask.caption = task.caption
+        localTask.createdDate = task.createdDate
+        localTask.isComplete = task.isComplete
+        localTask.category = task.category
+        do {
+            try realm.write {
+                realm.add(localTask)
+            }
+        }
+        catch let error as NSError {
+            let errorText = error.localizedDescription
+            os_log("%@", type: .error, errorText)
+        }
         os_log("LOG_INFO: Task successfully created", type: .info)
     }
     
@@ -125,8 +161,20 @@ extension HomeViewController : UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         if editingStyle ==  .delete {
-            tasks.remove(at: indexPath.row)
-            tableView.deleteRows(at: [indexPath], with: .automatic)
+            let taskToDelete = tasks[indexPath.row]
+            if let localTaskToDelete = realm.object(ofType: LocalTask.self, forPrimaryKey: taskToDelete.id) {
+                do {
+                    try realm.write {
+                        realm.delete(localTaskToDelete)
+                    }
+                }
+                catch let error as NSError {
+                    let errorText = error.localizedDescription
+                    os_log("%@", type: .error, errorText)
+                }
+                tasks.remove(at: indexPath.row)
+                tableView.deleteRows(at: [indexPath], with: .automatic)
+            }
         }
     }
 }
